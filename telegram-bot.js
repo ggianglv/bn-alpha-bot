@@ -82,16 +82,20 @@ async function checkForNewData() {
     return;
   }
 
+  if (latestConfig == null) {
+    latestConfig = newConfig;
+    console.log('Initial config set:', latestConfig);
+    return;
+  }
+
 
   // Compare with stored config
-  if (!latestConfig || latestConfig.configId !== newConfig.configId) {
+  if (latestConfig.configId !== newConfig.configId) {
     latestConfig = newConfig;
     const message = `New record detected!\n` +
       `Config Name: ${newConfig.configName}\n` +
       `Token Symbol: ${newConfig.tokenSymbol}\n` +
-      `Airdrop Amount: ${newConfig.airdropAmount}\n` +
-      `Claim Start: ${new Date(newConfig.claimStartTime).toLocaleString()}\n` +
-      `Claim End: ${new Date(newConfig.claimEndTime).toLocaleString()}`;
+      `Airdrop Amount: ${newConfig.airdropAmount}\n`
     await sendTelegramMessage(message);
   } else {
     console.log('No new records found');
@@ -108,4 +112,5 @@ cron.schedule('0 * * * *', async () => {
 
 // Initial check on startup
 console.log('Bot started');
+sendTelegramMessage('Bot started successfully. Monitoring for new records...');
 checkForNewData();
