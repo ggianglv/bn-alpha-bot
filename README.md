@@ -1,0 +1,1 @@
+Notify user when have new Binance alpha airdrop via telegram
