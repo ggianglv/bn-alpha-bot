@@ -108,7 +108,7 @@ cron.schedule('0 * * * *', async () => {
   setTimeout(async () => {
     console.log('Checking for new data at', new Date().toLocaleString());
     await checkForNewData();
-  }, 500);
+  }, 200);
 });
 
 // Initial check on startup
