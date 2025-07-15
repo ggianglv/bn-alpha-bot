@@ -95,7 +95,8 @@ async function checkForNewData() {
     const message = `New record detected!\n` +
       `Config Name: ${newConfig.configName}\n` +
       `Token Symbol: ${newConfig.tokenSymbol}\n` +
-      `Airdrop Amount: ${newConfig.airdropAmount}\n`
+      `Airdrop Amount: ${newConfig.airdropAmount}\n` +
+      `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold} ? 'FCFS' : 'Phase' \n` 
     await sendTelegramMessage(message);
   } else {
     console.log('No new records found');
