@@ -92,11 +92,10 @@ async function checkForNewData() {
   // Compare with stored config
   if (latestConfig.configId !== newConfig.configId) {
     latestConfig = newConfig;
-    const message = `New record detected!\n` +
-      `Config Name: ${newConfig.configName}\n` +
+    const message = `New Airdrop!\n` +
       `Token Symbol: ${newConfig.tokenSymbol}\n` +
       `Airdrop Amount: ${newConfig.airdropAmount}\n` +
-      `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold} ? 'FCFS' : 'Phase' \n` 
+      `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold ? 'FCFS' : 'Phase'} \n` 
     await sendTelegramMessage(message);
   } else {
     console.log('No new records found');
