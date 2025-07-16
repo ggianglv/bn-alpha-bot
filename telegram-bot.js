@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
 const cron = require('node-cron');
+const puppeteer = require('puppeteer');
 require('dotenv').config();
 
 // Load Telegram bot token and API URL from .env
@@ -12,6 +13,7 @@ const USER_IDS = config.userIds;
 
 // In-memory storage for the latest config
 let latestConfig = null;
+let latestMexcLaunchPool = null;
 
 // Headers for the API request
 const headers = {
@@ -43,7 +45,7 @@ const headers = {
 };
 
 // Function to fetch data from API
-async function fetchData() {
+async function fetchBnAirdropData() {
   try {
     const response = await axios.post('https://www.binance.com/bapi/defi/v1/friendly/wallet-direct/buw/growth/query-alpha-airdrop', {
       page: 1,
@@ -75,8 +77,8 @@ async function sendTelegramMessage(message) {
 }
 
 // Function to check for new data
-async function checkForNewData() {
-  const newConfig = await fetchData();
+async function checkForNewAirdropData() {
+  const newConfig = await fetchBnAirdropData();
   if (!newConfig) {
     console.log('No new data fetched');
     return;
@@ -95,22 +97,69 @@ async function checkForNewData() {
     const message = `New Airdrop!\n` +
       `Token Symbol: ${newConfig.tokenSymbol}\n` +
       `Airdrop Amount: ${newConfig.airdropAmount}\n` +
-      `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold ? 'FCFS' : 'Phase'} \n` 
+      `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold ? 'FCFS' : 'Phase'} \n`
     await sendTelegramMessage(message);
   } else {
     console.log('No new records found');
   }
 }
 
+const fetchMexcLaunchPool = async () => {
+  let browser;
+  try {
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    await page.goto('https://www.mexc.com/vi-VN/mx-activity/launchpool', { waitUntil: 'networkidle2' });
+
+    const data = await page.evaluate(() => {
+      const element = document.querySelector('[class*="pool-overview_title-activity"]');
+      return element ? element.innerText : null;
+    });
+
+    return data
+  } catch (error) {
+    console.log(error);
+  } finally {
+    if (browser) await browser.close();
+  }
+};
+
+async function checkMexcLaunchPool() {
+  const newToken = await fetchMexcLaunchPool();
+  if (!newToken) {
+    console.log('No new data fetched');
+    return;
+  }
+
+  if (latestMexcLaunchPool === null) {
+    latestMexcLaunchPool = newToken;
+    console.log('Initial MEXC config set:', latestMexcLaunchPool);
+    return;
+  }
+
+
+  // Compare with stored config
+  if (latestMexcLaunchPool !== newToken) {
+    latestMexcLaunchPool = newToken;
+    const message = `New MEXC Launch Pool! ${newToken}`
+    await sendTelegramMessage(message);
+  } else {
+    console.log('No new mexc launchpool found');
+  }
+}
+
+
 // Schedule task to run at every hour with 500ms delay
 cron.schedule('0 * * * *', async () => {
   setTimeout(async () => {
     console.log('Checking for new data at', new Date().toLocaleString());
-    await checkForNewData();
+    await checkForNewAirdropData();
+    await checkMexcLaunchPool();
   }, 200);
 });
 
 // Initial check on startup
 console.log('Bot started');
-sendTelegramMessage('Bot started successfully. Monitoring for new records...');
-checkForNewData();
+checkForNewAirdropData();
+checkMexcLaunchPool()
