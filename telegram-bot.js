@@ -78,29 +78,33 @@ async function sendTelegramMessage(message) {
 
 // Function to check for new data
 async function checkForNewAirdropData() {
-  const newConfig = await fetchBnAirdropData();
-  if (!newConfig) {
-    console.log('No new data fetched');
-    return;
-  }
+  try {
+    const newConfig = await fetchBnAirdropData();
+    if (!newConfig) {
+      console.log('No new data fetched');
+      return;
+    }
 
-  if (latestConfig == null) {
-    latestConfig = newConfig;
-    console.log('Initial config set:', latestConfig);
-    return;
-  }
+    if (latestConfig == null) {
+      latestConfig = newConfig;
+      console.log('Initial config set:', latestConfig);
+      return;
+    }
 
 
-  // Compare with stored config
-  if (latestConfig.configId !== newConfig.configId) {
-    latestConfig = newConfig;
-    const message = `New Airdrop!\n` +
-      `Token Symbol: ${newConfig.tokenSymbol}\n` +
-      `Airdrop Amount: ${newConfig.airdropAmount}\n` +
-      `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold ? 'FCFS' : 'Phase'} \n`
-    await sendTelegramMessage(message);
-  } else {
-    console.log('No new records found');
+    // Compare with stored config
+    if (latestConfig.configId !== newConfig.configId) {
+      latestConfig = newConfig;
+      const message = `New Airdrop!\n` +
+          `Token Symbol: ${newConfig.tokenSymbol}\n` +
+          `Airdrop Amount: ${newConfig.airdropAmount}\n` +
+          `Type: ${newConfig.pointsThreshold === newConfig.secondPointsThreshold ? 'FCFS' : 'Phase'} \n`
+      await sendTelegramMessage(message);
+    } else {
+      console.log('No new records found');
+    }
+  }catch (e) {
+    await sendTelegramMessage(e.message || 'Error checking for new airdrop data');
   }
 }
 
@@ -120,6 +124,7 @@ const fetchMexcLaunchPool = async () => {
     return data
   } catch (error) {
     console.log(error);
+    await sendTelegramMessage(error.message || 'Error fetching MEXC Launch Pool data');
   } finally {
     if (browser) await browser.close();
   }
