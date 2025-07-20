@@ -113,7 +113,6 @@ cron.schedule('0 * * * *', async () => {
   setTimeout(async () => {
     console.log('Checking for new data at', new Date().toLocaleString());
     await checkForNewAirdropData();
-    await checkMexcLaunchPool();
   }, 200);
 });
 
