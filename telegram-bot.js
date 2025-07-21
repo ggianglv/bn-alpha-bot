@@ -109,7 +109,7 @@ async function checkForNewAirdropData() {
 }
 
 // Schedule task to run at every hour with 500ms delay
-cron.schedule('0 * * * *', async () => {
+cron.schedule('0,30,58 * * * *', async () => {
   setTimeout(async () => {
     console.log('Checking for new data at', new Date().toLocaleString());
     await checkForNewAirdropData();
