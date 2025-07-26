@@ -108,14 +108,70 @@ async function checkForNewAirdropData() {
   }
 }
 
+const fetchMexcLaunchPool = async () => {
+  let browser;
+  try {
+    browser = await puppeteer.launch({ headless: true,  args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+
+    await page.goto('https://www.mexc.com/vi-VN/mx-activity/launchpool', { waitUntil: 'networkidle2' });
+
+    const data = await page.evaluate(() => {
+      const element = document.querySelector('[class*="pool-overview_title-activity"]');
+      return element ? element.innerText : null;
+    });
+
+    return data
+  } catch (error) {
+    console.log(error);
+    await sendTelegramMessage(error.message || 'Error fetching MEXC Launch Pool data');
+  } finally {
+    if (browser) await browser.close();
+  }
+};
+
+async function checkMexcLaunchPool() {
+  const newToken = await fetchMexcLaunchPool();
+  if (!newToken) {
+    console.log('No new data fetched');
+    return;
+  }
+
+  if (latestMexcLaunchPool === null) {
+    latestMexcLaunchPool = newToken;
+    sendTelegramMessage(`Initial MEXC Launch Pool: ${latestMexcLaunchPool}`);
+    console.log('Initial MEXC config set:', latestMexcLaunchPool);
+    return;
+  }
+
+
+  // Compare with stored config
+  if (latestMexcLaunchPool !== newToken) {
+    latestMexcLaunchPool = newToken;
+    const message = `New MEXC Launch Pool! ${newToken}`
+    await sendTelegramMessage(message);
+  } else {
+    console.log('No new mexc launchpool found');
+  }
+}
+
 // Schedule task to run at every hour with 500ms delay
-cron.schedule('0,30,58 * * * *', async () => {
+cron.schedule('0,28,30,58 * * * *', async () => {
   setTimeout(async () => {
     console.log('Checking for new data at', new Date().toLocaleString());
     await checkForNewAirdropData();
   }, 200);
 });
 
+cron.schedule('2 * * * *', async () => {
+  setTimeout(async () => {
+    console.log('Checking for new data at', new Date().toLocaleString());
+    await checkForNewAirdropData();
+    await checkMexcLaunchPool();
+  }, 200);
+});
+
 // Initial check on startup
 console.log('Bot started');
 checkForNewAirdropData();
+checkMexcLaunchPool()
