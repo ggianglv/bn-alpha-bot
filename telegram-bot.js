@@ -111,7 +111,7 @@ async function checkForNewAirdropData() {
 const fetchMexcLaunchPool = async () => {
   let browser;
   try {
-    browser = await puppeteer.launch({ headless: true,  args: ['--no-sandbox'] });
+    browser = await puppeteer.launch({ headless: true,  args: ['--no-sandbox'], timeout: 0 });
     const page = await browser.newPage();
 
     await page.goto('https://www.mexc.com/vi-VN/mx-activity/launchpool', { waitUntil: 'networkidle2' });
